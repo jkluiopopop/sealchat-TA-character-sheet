@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>三角机构员工工牌</title>
+  <style>
+    :root {
+      --ink: #24163f;
+      --ink-2: #514866;
+      --paper: #fbfbfd;
+      --line: #c9c7d2;
+      --soft: #efedf2;
+      --red: #d71937;
+      --red-soft: #f8e5e9;
+      --blue: #1556bd;
+      --blue-soft: #e5edfa;
+      --yellow: #f2b900;
+      --yellow-soft: #fff4c7;
+      --green: #dff0d7;
+      --purple: #7130a3;
+      --shadow: 0 14px 38px rgba(36, 22, 63, .12);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      padding: 16px;
+      background:
+        linear-gradient(rgba(36,22,63,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(36,22,63,.035) 1px, transparent 1px),
+        #ececf1;
+      background-size: 22px 22px;
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; }
+
+    .sheet {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid #d7d5df;
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .masthead {
+      position: relative;
+      min-height: 178px;
+      padding: 28px clamp(20px, 5vw, 52px) 30px;
+      color: white;
+      background: var(--ink);
+      overflow: hidden;
+    }
+    .masthead::before, .masthead::after {
+      content: "";
+      position: absolute;
+      width: 0; height: 0;
+      border-left: 150px solid transparent;
+      border-right: 150px solid transparent;
+      border-bottom: 260px solid rgba(215,25,55,.92);
+      transform: rotate(16deg);
+      right: -72px; top: -92px;
+    }
+    .masthead::after {
+      border-left-width: 70px;
+      border-right-width: 70px;
+      border-bottom-width: 120px;
+      border-bottom-color: rgba(255,255,255,.13);
+      right: 132px; top: 72px;
+      transform: rotate(44deg);
+    }
+    .brand, .employee-name, .employee-meta { position: relative; z-index: 1; }
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 13px; font-weight: 800; letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+    .brand-mark {
+      flex: 0 0 auto;
+      width: 24px; height: 22px;
+      margin: 0; padding: 0;
+      border: 0; outline: 0;
+      background: var(--red);
+      cursor: default;
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .employee-name {
+      margin: 19px 0 4px;
+      font-size: clamp(28px, 6vw, 48px);
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    .employee-meta { color: #d8d3e0; font-size: 13px; }
+
+    .nav {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; gap: 4px;
+      padding: 8px 10px;
+      overflow-x: auto;
+      background: rgba(251,251,253,.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .nav button {
+      flex: 0 0 auto;
+      border: 0; border-radius: 999px;
+      padding: 7px 12px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 12px; font-weight: 800;
+    }
+    .nav button:hover, .nav button.active { background: var(--ink); color: white; }
+
+    .page { display: none; padding: clamp(18px, 4vw, 34px); }
+    .page.active { display: block; }
+    .page-title {
+      display: flex; align-items: center; gap: 12px;
+      margin: 0 0 20px;
+      font-size: 24px; font-weight: 900;
+    }
+    .page-title::before {
+      content: ""; width: 14px; height: 14px;
+      background: currentColor;
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+    }
+
+    .grid { display: grid; gap: 14px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .span-2 { grid-column: span 2; }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: white;
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 10px 14px;
+      color: white;
+      background: var(--ink);
+      font-size: 13px; font-weight: 900;
+      letter-spacing: .05em;
+    }
+    .panel-head.red { background: var(--red); }
+    .panel-head.blue { background: var(--blue); }
+    .panel-head.yellow { background: var(--yellow); color: var(--ink); }
+    .panel-head.purple { background: var(--purple); }
+    .panel-body { padding: 14px; }
+    .hint { color: #716a7f; font-size: 12px; }
+
+    .field { display: grid; gap: 5px; }
+    .field > label { color: var(--ink-2); font-size: 11px; font-weight: 900; letter-spacing: .08em; }
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(21,86,189,.12);
+    }
+
+    .identity {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 18px;
+    }
+    .portrait {
+      position: relative;
+      min-height: 182px;
+      display: grid; place-items: center;
+      padding: 7px;
+      border: 0;
+      background:
+        linear-gradient(135deg, var(--red) 0 15px, transparent 15px),
+        linear-gradient(315deg, var(--blue) 0 15px, transparent 15px),
+        var(--ink);
+      clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+      overflow: hidden;
+      color: var(--red); font-size: 50px; font-weight: 900;
+    }
+    .portrait::before,
+    .portrait::after {
+      content: "";
+      position: absolute;
+      z-index: 2;
+      width: 23px;
+      height: 5px;
+      background: white;
+      opacity: .9;
+    }
+    .portrait::before { top: 12px; right: 9px; }
+    .portrait::after { bottom: 12px; left: 9px; }
+    .portrait-media {
+      width: 100%;
+      height: 100%;
+      min-height: 168px;
+      display: grid;
+      place-items: center;
+      background: var(--soft);
+      overflow: hidden;
+    }
+    .portrait img { width: 100%; height: 100%; object-fit: cover; }
+    .arc-bands { display: grid; gap: 6px; margin-top: 12px; }
+    .arc-band {
+      display: grid; grid-template-columns: 34px minmax(58px, auto) 1fr;
+      align-items: center; min-height: 48px;
+      padding: 6px 12px;
+      color: white;
+      font-weight: 900;
+      border-radius: 10px;
+    }
+    .arc-band .letter { font-size: 28px; }
+    .arc-kind { font-size: 12px; letter-spacing: .03em; white-space: nowrap; }
+    .arc-value {
+      min-width: 0;
+      margin-left: 12px;
+      padding-left: 12px;
+      border-left: 1px solid currentColor;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .arc-band.blue { background: var(--blue); }
+    .arc-band.yellow { background: var(--yellow); color: var(--ink); }
+    .arc-band.red { background: var(--red); }
+
+    .counter-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 8px; }
+    .counter {
+      border: 1px solid var(--line); border-radius: 12px;
+      padding: 10px 8px; text-align: center; background: var(--soft);
+    }
+    .counter label { display: block; font-size: 11px; font-weight: 900; color: var(--ink-2); }
+    .counter input { margin-top: 5px; text-align: center; font-size: 19px; font-weight: 900; padding: 5px; }
+
+    .quality-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .quality {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .quality.overloaded { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+    .quality-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 10px;
+      background: var(--red);
+      color: white; font-weight: 900;
+    }
+    .quality-roll {
+      border: 1px solid rgba(255,255,255,.65); border-radius: 999px;
+      background: transparent; color: white;
+      padding: 2px 8px; cursor: pointer; font-size: 11px;
+    }
+    .quality-roll:hover { background: white; color: var(--red); }
+    .qa-track { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; padding: 10px; }
+    .qa-dot {
+      aspect-ratio: 1;
+      border: 1px solid #9b96a7;
+      background: white;
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+      cursor: pointer;
+    }
+    .qa-dot.max { background: #d5f1ef; }
+    .qa-dot.on { background: var(--yellow); border-color: #ad8300; }
+    .quality-foot {
+      display: flex; justify-content: space-between; gap: 8px;
+      padding: 0 10px 10px;
+      color: var(--ink-2); font-size: 11px;
+    }
+    .quality-foot input { width: 52px; padding: 3px 5px; text-align: center; }
+
+    .agency-track {
+      --track-color: var(--red);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      overflow: hidden;
+    }
+    .agency-track.track-yellow { --track-color: var(--yellow); }
+    .agency-track.track-blue { --track-color: var(--blue); }
+    .track-heading {
+      padding: 10px 14px;
+      background: var(--track-color);
+      color: white;
+      font-size: 16px;
+      font-weight: 900;
+      text-align: center;
+    }
+    .track-yellow .track-heading { color: var(--ink); }
+    .track-scroll { overflow-x: auto; padding: 12px; }
+    .track-board { min-width: 780px; }
+    .track-ranks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+    .track-ranks span {
+      padding: 5px 6px;
+      background: var(--soft);
+      text-align: center;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .track-row { display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 3px; margin: 3px 0; }
+    .track-cell {
+      height: 34px;
+      border: 1px solid #9b96a7;
+      border-radius: 3px;
+      background: #d5f1ef;
+      color: var(--ink-2);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .track-cell.marked { background: var(--track-color); color: white; border-color: var(--track-color); }
+    .track-yellow .track-cell.marked { color: var(--ink); }
+    .track-cell.crossed { background: var(--ink); color: white; border-color: var(--ink); }
+    .track-help { margin-top: 10px; color: var(--ink-2); font-size: 11px; }
+
+    .repeat-list { display: grid; gap: 12px; }
+    .repeat-card { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: white; }
+    .repeat-title { padding: 8px 12px; background: var(--soft); font-weight: 900; }
+    .repeat-body { padding: 12px; }
+    .compact-fields { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .compact-fields .wide { grid-column: 1 / -1; }
+
+    .toggle {
+      border: 1px solid var(--line); border-radius: 999px;
+      padding: 6px 10px; background: white; cursor: pointer; font-size: 12px; font-weight: 800;
+    }
+    .toggle.on { background: var(--ink); color: white; }
+    .doc-note {
+      margin-top: 16px; padding: 12px 14px;
+      border-left: 4px solid var(--red);
+      background: var(--red-soft);
+      font-size: 12px;
+    }
+
+    .roll-fab {
+      position: fixed; right: 24px; bottom: 22px; z-index: 30;
+      width: 58px; height: 58px;
+      border: 0; border-radius: 50%;
+      background: var(--red); color: white;
+      box-shadow: 0 10px 24px rgba(215,25,55,.35);
+      cursor: pointer; font-weight: 900;
+    }
+    .roll-fab:hover { transform: translateY(-2px); }
+    .modal {
+      position: fixed; inset: 0; z-index: 50;
+      display: none; place-items: center;
+      padding: 18px;
+      background: rgba(23,13,40,.72);
+      backdrop-filter: blur(6px);
+    }
+    .modal.open { display: grid; }
+    .dialog {
+      width: min(440px, 100%);
+      border-radius: 22px; overflow: hidden;
+      background: white; box-shadow: var(--shadow);
+    }
+    .dialog-head { padding: 18px 20px; background: var(--ink); color: white; }
+    .dialog-head strong { display: block; font-size: 22px; }
+    .dialog-body { padding: 18px 20px; }
+    .dice { display: flex; justify-content: center; gap: 7px; margin: 14px 0 18px; }
+    .die {
+      width: 45px; height: 40px; display: grid; place-items: center;
+      background: var(--red); color: white; font-weight: 900;
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+      padding-top: 10px;
+    }
+    .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .btn {
+      border: 1px solid var(--line); border-radius: 10px;
+      padding: 9px 12px; background: white; cursor: pointer; font-weight: 900;
+    }
+    .btn.primary { background: var(--red); border-color: var(--red); color: white; }
+    .btn:disabled { opacity: .42; cursor: not-allowed; }
+    .rule-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .rule-actions .btn { flex: 1 1 150px; }
+    .roll-status { margin-top: 10px; padding: 8px 10px; border-radius: 9px; background: var(--paper-2); font-size: 12px; font-weight: 800; }
+    .tria-tools { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+    .tria-tools summary { cursor: pointer; font-size: 12px; font-weight: 900; }
+    .access-error {
+      min-height: 20px;
+      margin-top: 7px;
+      color: var(--red);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .restricted-menu {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: #e9e9ee;
+    }
+    .restricted-menu.open { display: grid; }
+    .restricted-document {
+      position: relative;
+      width: min(860px, 100%);
+      min-height: min(700px, calc(100vh - 36px));
+      border: 1px solid #bab7c4;
+      border-radius: 4px;
+      background: #fbfbfd;
+      box-shadow: 0 18px 50px rgba(36,22,63,.18);
+      overflow: hidden;
+    }
+    .restricted-document::before {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -104px;
+      width: 280px;
+      height: 280px;
+      background: var(--red);
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+      transform: rotate(15deg);
+      opacity: .95;
+    }
+    .restricted-head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 30px 34px 24px;
+      border-bottom: 5px solid var(--red);
+      color: var(--ink);
+    }
+    .restricted-kicker { color: var(--red); font-size: 12px; font-weight: 900; letter-spacing: .2em; }
+    .restricted-title { margin-top: 5px; font-size: clamp(28px, 5vw, 44px); font-weight: 900; letter-spacing: .12em; }
+    .restricted-close {
+      position: relative;
+      z-index: 2;
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: 999px;
+      background: rgba(36,22,63,.82);
+      color: white;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .restricted-surface {
+      position: relative;
+      min-height: 510px;
+      margin: 28px 34px 34px;
+      border: 1px solid #d0ced8;
+      background:
+        linear-gradient(90deg, transparent 0 68px, rgba(215,25,55,.16) 68px 70px, transparent 70px),
+        repeating-linear-gradient(180deg, transparent 0 39px, rgba(36,22,63,.08) 39px 40px),
+        white;
+    }
+    .restricted-surface::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 170px;
+      height: 150px;
+      border: 8px solid rgba(36,22,63,.025);
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+      transform: translate(-50%,-50%);
+    }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; z-index: 80;
+      transform: translate(-50%, 18px); opacity: 0; pointer-events: none;
+      padding: 8px 14px; border-radius: 999px;
+      background: var(--ink); color: white; font-size: 12px;
+      transition: .2s;
+    }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+    @media (max-width: 720px) {
+      body { padding: 0; background: var(--paper); }
+      .sheet { border: 0; border-radius: 0; box-shadow: none; }
+      .grid.two, .grid.three, .quality-grid { grid-template-columns: 1fr; }
+      .span-2 { grid-column: auto; }
+      .identity { grid-template-columns: 108px 1fr; }
+      .portrait { min-height: 142px; }
+      .portrait-media { min-height: 128px; }
+      .counter-grid { grid-template-columns: repeat(3, 1fr); }
+      .compact-fields { grid-template-columns: 1fr; }
+      .compact-fields .wide { grid-column: auto; }
+      .roll-fab { right: 14px; bottom: 14px; }
+      .dialog-actions[style] { grid-template-columns: 1fr 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="sheet"></div>
+  <button class="roll-fab" type="button" data-action="open-roll" aria-label="投掷六颗四面骰">6d4</button>
+
+  <div id="rollModal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="rollTitle">
+      <div class="dialog-head"><span class="hint" style="color:#d9d3e1">动态逆因果概率增强系统</span><strong id="rollTitle">请求机构</strong></div>
+      <div class="dialog-body">
+        <div class="dice"><span class="die">4</span><span class="die">4</span><span class="die">4</span><span class="die">4</span><span class="die">4</span><span class="die">4</span></div>
+        <div class="grid two">
+          <div class="field"><label>使用素质</label><select id="rollQuality"></select></div>
+          <div class="field"><label>检定类型</label><select id="rollKind"><option value="ta">普通检定</option><option value="tr">请求机构 / 现实改写</option></select></div>
+        </div>
+        <div class="field" style="margin-top:10px"><label>结算时的 QA 调整</label><input id="rollQa" type="number" value="0" min="-6" max="6" /></div>
+        <p class="hint">先点击“1. 掷骰”并查看聊天结果，再填写 QA 调整并点击“2. 结算”。角色卡会自动发送 .ta/.tr 与 .taq，无需手动输入指令；关闭弹窗不会丢失本次待结算状态。若角色卡曾刷新，也可直接点击结算或放弃来处理 SealDice 中已有的待结算检定。</p>
+        <div id="rollStatus" class="roll-status">可发起新检定，或处理 SealDice 中已有的待结算检定</div>
+        <div class="dialog-actions" style="grid-template-columns:1fr 1fr 1fr 1fr"><button class="btn" data-action="close-roll">关闭</button><button id="cancelRollButton" class="btn" data-action="cancel-roll">放弃</button><button id="rollButton" class="btn primary" data-action="confirm-roll">1. 掷骰</button><button id="settleRollButton" class="btn primary" data-action="settle-roll">2. 结算</button></div>
+        <details class="tria-tools"><summary>三重升华快捷处理</summary><p class="hint">原始结果恰好三个 3 时，从下列效果中选择；补充 QA 使用上方选中的素质。</p><div class="field"><label>补充 QA 点数</label><input id="triaQa" type="number" value="1" min="1" max="3" /></div><div class="rule-actions"><button class="btn" data-action="tria-all">全员协力</button><button class="btn" data-action="tria-qa">补充所选素质 QA</button><button class="btn" data-action="tria-commend">此刻之星（嘉奖 +3）</button></div></details>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <div id="accessModal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="accessTitle">
+      <div class="dialog-head"><span class="hint" style="color:#d9d3e1">内部安全验证</span><strong id="accessTitle">访问凭证</strong></div>
+      <div class="dialog-body">
+        <div class="field"><label>密钥</label><input id="accessKey" type="password" autocomplete="off" /></div>
+        <div id="accessError" class="access-error"></div>
+        <div class="dialog-actions"><button class="btn" data-action="close-access">取消</button><button class="btn primary" data-action="confirm-access">验证</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="restrictedMenu" class="restricted-menu" aria-hidden="true">
+    <section class="restricted-document">
+      <header class="restricted-head">
+        <div><div class="restricted-kicker">TRIANGLE AGENCY / INTERNAL</div><div class="restricted-title">受限文档</div></div>
+        <button class="restricted-close" data-action="close-restricted">退出受限区</button>
+      </header>
+      <div class="restricted-surface"></div>
+    </section>
+  </div>
+
+  <script>
+    var _windowId = null;
+    var _rollDispatchMode = 'template';
+    function postEvent(action, payload) {
+      if (!_windowId) return;
+      window.parent.postMessage({ type: 'SEALCHAT_EVENT', version: 1, windowId: _windowId, action: action, payload: payload }, '*');
+    }
+    window.sealchat = {
+      onUpdate: function (cb) {
+        window.addEventListener('message', function (e) {
+          if (e.source !== window.parent) return;
+          if (e.data && e.data.type === 'SEALCHAT_UPDATE' && e.data.payload) {
+            _windowId = e.data.payload.windowId;
+            cb(e.data.payload);
+          }
+        });
+      },
+      setRollDispatchMode: function (mode) { _rollDispatchMode = mode === 'template' ? 'template' : 'default'; },
+      setRollMode: function (mode) { _rollDispatchMode = mode === 'template' ? 'template' : 'default'; },
+      roll: function (template, label, args) {
+        postEvent('ROLL_DICE', { roll: { template: template, label: label || '', args: args || {}, dispatchMode: _rollDispatchMode } });
+      },
+      updateAttrs: function (attrs) { postEvent('UPDATE_ATTRS', { attrs: attrs }); }
+    };
+
+    var QUALITY_NAMES = ['缜密', '欺瞒', '活力', '共情', '主动', '坚持', '气质', '专业', '低调'];
+    var RESTRICTED_DOCUMENT_KEY_HASH = 397581288;
+    var WORKLIFE_TRACKS = {
+      competency: {
+        title: 'Competency / 职位', tone: 'track-red',
+        topRanks: ['培训生', '助理', '高级助理', '副主任', '主任'],
+        bottomRanks: ['董事长', '执行副总裁', '高级经理', '副总裁', '区域总监'],
+        top: ['', '', 'A3', '', '', 'D4', '', '', 'G3', '', '', 'J3', '', '', 'N3'],
+        bottom: ['', '', '', 'Y2', '', '', 'W8', '', '', 'T3', '', '', 'Q3', '', '']
+      },
+      reality: {
+        title: 'Reality / 现实', tone: 'track-yellow',
+        top: ['C4', '', '', 'L11', '', '', '', 'E2', '', 'O4', '', '', '', 'T6', ''],
+        bottom: ['', '', '', '', 'E3', '', '', '', 'H5', '', 'X3', '', '', '', 'V2']
+      },
+      anomaly: {
+        title: 'Anomaly / 异常', tone: 'track-blue',
+        top: ['H4', 'H3', '', '', 'U2', '', 'X2', '', '', '', 'N1', '', 'Q2', '', ''],
+        bottom: ['', '', '', '', '', '', '', 'A7', '', '', '', 'G8', '', 'L10', '']
+      }
+    };
+    var currentData = { name: '', avatarUrl: '', attrs: {} };
+    var model = null;
+    var activePage = 'employee';
+    var rollPending = false;
+
+    function clone(value) { return JSON.parse(JSON.stringify(value)); }
+    function makeArray(count, factory) { var out = []; for (var i = 0; i < count; i++) out.push(factory(i)); return out; }
+    function defaultModel() {
+      var q = {};
+      QUALITY_NAMES.forEach(function (name) { q[name] = { current: 0, max: 0 }; });
+      return {
+        version: 3,
+        profile: { code: '', rank: '', reputation: '', anomaly: '', reality: '', competency: '', realityTrigger: '', highestDirective: '', burnRelease: '', authorizedActions: ['', '', ''], supplies: '' },
+        counters: { commendations: 0, demerits: 0, burnout: 0, mvp: 0, probation: 0, extraOverload: 0, chaos: 0, realityFailures: 0 },
+        qualities: q,
+        tracks: {
+          competency: { top: makeArray(15, function(){return 0;}), bottom: makeArray(15, function(){return 0;}) },
+          reality: { top: makeArray(15, function(){return 0;}), bottom: makeArray(15, function(){return 0;}) },
+          anomaly: { top: makeArray(15, function(){return 0;}), bottom: makeArray(15, function(){return 0;}) }
+        },
+        anomalies: makeArray(3, function(){ return { name:'', ability:'', trigger:'', quality:'', success:'', failure:'', practiced:'' }; }),
+        benefits: makeArray(6, function(){ return { name:'', effect:'' }; }),
+        relationships: makeArray(6, function(){ return { name:'', player:'', connection:0, inNetwork:false, reward:'', summary:'' }; }),
+        questionnaire: makeArray(12, function(){return '';}),
+        customQuestions: ['基于您的现实身份的额外问题 1', '基于您的现实身份的额外问题 2', '基于您的现实身份的额外问题 3']
+      };
+    }
+    function mergeDeep(base, extra) {
+      if (!extra || typeof extra !== 'object') return base;
+      Object.keys(extra).forEach(function (key) {
+        if (Array.isArray(extra[key])) base[key] = clone(extra[key]);
+        else if (extra[key] && typeof extra[key] === 'object') {
+          if (!base[key] || typeof base[key] !== 'object') base[key] = {};
+          mergeDeep(base[key], extra[key]);
+        } else base[key] = extra[key];
+      });
+      return base;
+    }
+    function normalize(data) {
+      var attrs = (data && data.attrs) || {};
+      var next = mergeDeep(defaultModel(), attrs['$TriangleAgency']);
+      var initialSupplies = String(next.profile.initialSupplies || '').trim();
+      var extraSupplies = String(next.profile.extraSupplies || '').trim();
+      if (!String(next.profile.supplies || '').trim()) next.profile.supplies = [initialSupplies, extraSupplies].filter(Boolean).join('\n');
+      delete next.profile.initialSupplies;
+      delete next.profile.extraSupplies;
+      delete next.notes;
+      next.anomalies = (Array.isArray(next.anomalies) ? next.anomalies : []).map(function(item){
+        var anomaly = item && typeof item === 'object' ? item : {};
+        delete anomaly.question;
+        delete anomaly.answers;
+        delete anomaly.answerProgress;
+        delete anomaly.unlockDocs;
+        return anomaly;
+      });
+      next.benefits = (Array.isArray(next.benefits) ? next.benefits : []).map(function(item){
+        var benefit = item && typeof item === 'object' ? item : {};
+        delete benefit.document;
+        return benefit;
+      });
+      if (!Array.isArray(next.customQuestions)) next.customQuestions = [];
+      while (next.customQuestions.length < 3) next.customQuestions.push('基于您的现实身份的额外问题 ' + (next.customQuestions.length + 1));
+      next.customQuestions = next.customQuestions.slice(0, 3);
+      if (!next.tracks || typeof next.tracks !== 'object') next.tracks = {};
+      Object.keys(WORKLIFE_TRACKS).forEach(function(key){
+        var raw = next.tracks[key];
+        if (Array.isArray(raw)) raw = { top: raw.slice(0, 15), bottom: [] };
+        if (!raw || typeof raw !== 'object') raw = {};
+        var top = Array.isArray(raw.top) ? raw.top.slice(0, 15) : [];
+        var bottom = Array.isArray(raw.bottom) ? raw.bottom.slice(0, 15) : [];
+        while (top.length < 15) top.push(0);
+        while (bottom.length < 15) bottom.push(0);
+        next.tracks[key] = { top: top.map(function(v){return Math.max(0,Math.min(2,Number(v)||0));}), bottom: bottom.map(function(v){return Math.max(0,Math.min(2,Number(v)||0));}) };
+      });
+      QUALITY_NAMES.forEach(function (name) {
+        var root = Number(attrs[name]);
+        if (Number.isFinite(root)) next.qualities[name].current = Math.max(0, Math.min(9, root));
+        var rootMax = Number(attrs[name+'上限']);
+        if (Number.isFinite(rootMax)) next.qualities[name].max = Math.max(0, Math.min(9, rootMax));
+      });
+      if (attrs['职级'] != null) next.profile.rank = String(attrs['职级']);
+      if (attrs['机构信誉等级'] != null) next.profile.reputation = String(attrs['机构信誉等级']);
+      if (Number.isFinite(Number(attrs['嘉奖']))) next.counters.commendations = Number(attrs['嘉奖']);
+      if (Number.isFinite(Number(attrs['处分']))) next.counters.demerits = Number(attrs['处分']);
+      if (Number.isFinite(Number(attrs['燃尽']))) next.counters.burnout = Number(attrs['燃尽']);
+      if (Number.isFinite(Number(attrs['额外过载']))) next.counters.extraOverload = Math.max(0, Number(attrs['额外过载']));
+      if (Number.isFinite(Number(attrs['混沌']))) next.counters.chaos = Math.max(0, Number(attrs['混沌']));
+      if (Number.isFinite(Number(attrs['改写失败']))) next.counters.realityFailures = Math.max(0, Number(attrs['改写失败']));
+      return next;
+    }
+    function esc(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; });
+    }
+    function pathValue(path) {
+      return path.split('.').reduce(function (v, key) { return v == null ? '' : v[key]; }, model);
+    }
+    function setPath(path, value) {
+      var keys = path.split('.'); var target = model;
+      for (var i = 0; i < keys.length - 1; i++) target = target[keys[i]];
+      target[keys[keys.length - 1]] = value;
+    }
+    function field(label, path, type, cls) {
+      var val = pathValue(path);
+      if (type === 'textarea') return '<div class="field '+(cls||'')+'"><label>'+esc(label)+'</label><textarea data-path="'+esc(path)+'">'+esc(val)+'</textarea></div>';
+      return '<div class="field '+(cls||'')+'"><label>'+esc(label)+'</label><input type="'+(type||'text')+'" data-path="'+esc(path)+'" value="'+esc(val)+'" /></div>';
+    }
+    function counter(label, path) { return '<div class="counter"><label>'+esc(label)+'</label><input type="number" min="0" data-path="'+path+'" value="'+esc(pathValue(path))+'" /></div>'; }
+    function panel(title, color, body, cls) { return '<section class="panel '+(cls||'')+'"><div class="panel-head '+(color||'')+'">'+title+'</div><div class="panel-body">'+body+'</div></section>'; }
+
+    function renderHeader() {
+      var name = currentData.name || model.profile.code || '未命名员工';
+      var meta = [model.profile.code && ('代号 '+model.profile.code), model.profile.rank, model.profile.reputation && ('信誉 '+model.profile.reputation)].filter(Boolean).join(' · ');
+      return '<header class="masthead"><div class="brand"><button type="button" class="brand-mark" data-action="restricted-entry" tabindex="-1" aria-hidden="true"></button><span>Triangle Agency / Personnel Record</span></div><div class="employee-name">'+esc(name)+'</div><div class="employee-meta">'+esc(meta || '人力资源档案 · 授权员工访问')+'</div></header>';
+    }
+    function renderNav() {
+      var items = [['employee','员工档案'],['qualities','综合素质'],['anomalies','异常能力'],['relationships','现实关系'],['benefits','职级福利'],['worklife','工作与生活'],['questionnaire','入职问卷']];
+      return '<nav class="nav">'+items.map(function(i){return '<button class="'+(activePage===i[0]?'active':'')+'" data-action="page" data-page="'+i[0]+'">'+i[1]+'</button>';}).join('')+'</nav>';
+    }
+    function renderEmployee() {
+      var avatar = currentData.avatarUrl ? '<img src="'+esc(currentData.avatarUrl)+'" alt="员工照片" />' : '▲';
+      var identity = '<div class="identity"><div><div class="portrait"><div class="portrait-media">'+avatar+'</div></div></div><div class="grid two">'+field('代号','profile.code')+field('职级','profile.rank')+field('机构信誉等级','profile.reputation')+'<div class="span-2 arc-bands"><div class="arc-band blue"><span class="letter">A</span><span class="arc-kind">异常能力</span><span class="arc-value">'+esc(model.profile.anomaly || '未登记')+'</span></div><div class="arc-band yellow"><span class="letter">R</span><span class="arc-kind">现实</span><span class="arc-value">'+esc(model.profile.reality || '未登记')+'</span></div><div class="arc-band red"><span class="letter">C</span><span class="arc-kind">职位</span><span class="arc-value">'+esc(model.profile.competency || '未登记')+'</span></div></div></div></div>';
+      var arcs = '<div class="grid three">'+field('Anomaly / 异常名','profile.anomaly')+field('Reality / 现实身份','profile.reality')+field('Competency / 职位','profile.competency')+'</div>';
+      var notes = '<div class="grid two">'+field('现实触发器','profile.realityTrigger','textarea')+field('最高准则','profile.highestDirective','textarea')+field('燃尽释放','profile.burnRelease','textarea')+field('补给','profile.supplies','textarea')+'</div>';
+      var actions = '<div class="grid three">'+field('授权行为 1','profile.authorizedActions.0')+field('授权行为 2','profile.authorizedActions.1')+field('授权行为 3','profile.authorizedActions.2')+'</div>';
+      var counters = '<div class="counter-grid">'+counter('嘉奖','counters.commendations')+counter('处分','counters.demerits')+counter('燃尽','counters.burnout')+counter('MVP','counters.mvp')+counter('观察期','counters.probation')+'<div class="counter"><label>群混沌（镜像）</label><strong>'+esc(model.counters.chaos)+'</strong></div><div class="counter"><label>地点改写失败（镜像）</label><strong>'+esc(model.counters.realityFailures)+'</strong></div></div>';
+      return page('employee','员工档案',panel('员工识别信息','red',identity)+panel('A / R / C 三重身份','',arcs)+panel('任务状态','yellow',counters)+panel('机构授权','red',actions)+panel('个人档案附录','',notes));
+    }
+    function renderQualities() {
+      var cards = QUALITY_NAMES.map(function(name){
+        var q=model.qualities[name], dots='';
+        for(var i=1;i<=9;i++) dots+='<button class="qa-dot '+(i<=q.max?'max ':'')+(i<=q.current?'on':'')+'" data-action="qa" data-quality="'+esc(name)+'" data-value="'+i+'" title="设置当前质保为 '+i+'"></button>';
+        return '<div class="quality '+(q.current<=0?'overloaded':'')+'"><div class="quality-top"><span>'+esc(name)+'</span><button class="quality-roll" data-action="quality-roll" data-quality="'+esc(name)+'">检定 6d4</button></div><div class="qa-track">'+dots+'</div><div class="quality-foot"><span>当前 <input type="number" min="0" max="9" data-path="qualities.'+esc(name)+'.current" value="'+q.current+'" /></span><span>上限 <input type="number" min="0" max="9" data-path="qualities.'+esc(name)+'.max" value="'+q.max+'" /></span></div></div>';
+      }).join('');
+      var extra = '<div class="grid two">'+field('额外过载','counters.extraOverload','number')+'<div class="doc-note">当某项素质的当前质保为 0 时，使用该素质检定会过载：每点过载移除一个 3，并增加 1 点混沌。</div></div>';
+      var commands = '<div class="rule-actions"><button class="btn" data-action="rule-command" data-command=".tas">同步并查看规则资源</button><button class="btn" data-action="rule-command" data-command=".tarest">任务间隙恢复全部 QA</button></div>';
+      return page('qualities','综合素质 / Quality Assurance',panel('质保控制台','red','<div class="quality-grid">'+cards+'</div><div class="doc-note">点击三角格快速设置“当前质保”；点击检定使用该素质投掷 6d4。任务间隙可用下方按钮恢复全部 QA。</div>'+commands)+panel('过载','',extra));
+    }
+    function renderAnomalies() {
+      var list=model.anomalies.map(function(a,i){var p='anomalies.'+i+'.'; return '<div class="repeat-card"><div class="repeat-title">A'+(i+1)+' / '+esc(a.name||'未登记异常能力')+'</div><div class="repeat-body"><div class="compact-fields">'+field('异常名',p+'name')+field('异常能力',p+'ability')+field('触发条件',p+'trigger')+field('使用品质',p+'quality')+field('成功效果',p+'success','textarea')+field('失败效果',p+'failure','textarea')+field('训练效果',p+'practiced','textarea','wide')+'</div></div></div>';}).join('');
+      return page('anomalies','异常能力',panel('已登记能力','blue','<div class="repeat-list">'+list+'</div>'));
+    }
+    function renderRelationships(){
+      var list=model.relationships.map(function(r,i){var p='relationships.'+i+'.';return '<div class="repeat-card"><div class="repeat-title">R'+(i+1)+' / '+esc(r.name||'未命名关系')+'</div><div class="repeat-body"><div class="compact-fields">'+field('名字',p+'name')+field('扮演者',p+'player')+field('连接（0-9）',p+'connection','number')+'<div class="field"><label>网络状态</label><button class="toggle '+(r.inNetwork?'on':'')+'" data-action="network" data-index="'+i+'">'+(r.inNetwork?'已加入网络':'加入网络')+'</button></div>'+field('连接奖励',p+'reward','textarea')+field('简要介绍',p+'summary','textarea')+'</div></div></div>';}).join('');
+      var network=model.relationships.filter(function(r){return r.inNetwork;}).length;
+      return page('relationships','现实关系',panel('您当前的网络格数','yellow','<div style="font-size:34px;font-weight:900">'+network+'</div><div class="hint">由“已加入网络”的关系数量自动统计。</div>')+panel('人际网络','yellow','<div class="repeat-list">'+list+'</div>'));
+    }
+    function renderBenefits(){
+      var list=model.benefits.map(function(b,i){var p='benefits.'+i+'.';return '<div class="repeat-card"><div class="repeat-title">B'+(i+1)+' / '+esc(b.name||'未登记职级福利')+'</div><div class="repeat-body"><div class="compact-fields">'+field('福利名',p+'name','text','wide')+field('效果',p+'effect','textarea','wide')+'</div></div></div>';}).join('');
+      return page('benefits','职级福利',panel('Competency / 您当前的职级','red','<div style="font-size:24px;font-weight:900">'+esc(model.profile.rank||'未设定')+'</div>')+panel('已获批福利','red','<div class="repeat-list">'+list+'</div>'));
+    }
+    function renderTrackRanks(labels){return labels ? '<div class="track-ranks">'+labels.map(function(label){return '<span>'+esc(label)+'</span>';}).join('')+'</div>' : '';}
+    function renderTrackRow(key,lane,codes,direction){
+      return '<div class="track-row">'+codes.map(function(code,index){var status=Number(model.tracks[key][lane][index]||0),text=status===2?'×':status===1?(code||'●'):direction;return '<button class="track-cell '+(status===1?'marked':status===2?'crossed':'')+'" data-action="track" data-track="'+key+'" data-lane="'+lane+'" data-index="'+index+'" title="点击循环：可用 → 已移除 → 已标记">'+esc(text)+'</button>';}).join('')+'</div>';
+    }
+    function renderAgencyTrack(key){
+      var conf=WORKLIFE_TRACKS[key];
+      return '<section class="agency-track '+conf.tone+'"><div class="track-heading">'+conf.title+'</div><div class="track-scroll"><div class="track-board">'+renderTrackRanks(conf.topRanks)+renderTrackRow(key,'top',conf.top,'▷')+renderTrackRow(key,'bottom',conf.bottom,'◁')+renderTrackRanks(conf.bottomRanks)+'</div></div></section>';
+    }
+    function renderWorklife(){var help='<div class="track-help">点击格子依次循环：可用 → 已移除 → 已标记 → 可用。只有进入“已标记”状态后，才会显示该格的解锁代码。</div>';return page('worklife','工作与生活',renderAgencyTrack('competency')+renderAgencyTrack('reality')+renderAgencyTrack('anomaly')+help);}
+    function renderQuestionnaire(){
+      var qs=['你是如何与异常接触的？','机构是如何找到你的？','你的期望年薪是多少？','你的外貌特征是什么？','你的异常能力是否有独特的视觉表现？','你喜欢什么样的咖啡？','在你的人际关系中，谁是主要联系人？为什么？','在协作工作环境里，你能为团队带来什么？','请简述你的工作经历。'];
+      var rows=[];
+      for(var i=0;i<12;i++){
+        if(i<9) rows.push('<div class="repeat-card"><div class="repeat-title">'+(i+1)+'. '+esc(qs[i])+'</div><div class="repeat-body">'+field('员工回答','questionnaire.'+i,'textarea')+'</div></div>');
+        else rows.push('<div class="repeat-card"><div class="repeat-title">'+(i+1)+'. 自定义问题</div><div class="repeat-body"><div class="grid">'+field('问题','customQuestions.'+(i-9))+field('员工回答','questionnaire.'+i,'textarea')+'</div></div></div>');
+      }
+      var list=rows.join('');
+      return page('questionnaire','欢迎来到——三角机构！',panel('入职问卷','red','<div class="repeat-list">'+list+'</div>'));
+    }
+    function page(id,title,body){return '<main class="page '+(activePage===id?'active':'')+'" data-page-view="'+id+'"><h1 class="page-title">'+title+'</h1><div class="grid">'+body+'</div></main>';}
+    function render(){
+      document.getElementById('app').innerHTML=renderHeader()+renderNav()+renderEmployee()+renderQualities()+renderAnomalies()+renderRelationships()+renderBenefits()+renderWorklife()+renderQuestionnaire();
+    }
+    function rootPatch(){
+      var patch={ '$TriangleAgency': clone(model), '职级': model.profile.rank, '机构信誉等级': model.profile.reputation, '嘉奖': Number(model.counters.commendations)||0, '处分': Number(model.counters.demerits)||0, '燃尽': Number(model.counters.burnout)||0, '额外过载': Math.max(0,Number(model.counters.extraOverload)||0), '混沌': Math.max(0,Number(model.counters.chaos)||0), '改写失败': Math.max(0,Number(model.counters.realityFailures)||0) };
+      QUALITY_NAMES.forEach(function(name){patch[name]=Number(model.qualities[name].current)||0;patch[name+'上限']=Number(model.qualities[name].max)||0;});
+      return patch;
+    }
+    function save(message){ window.sealchat.updateAttrs(rootPatch()); toast(message||'已提交更新'); }
+    function toast(message){var el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(function(){el.classList.remove('show');},1400);}
+    function populateRollQualities(){var select=document.getElementById('rollQuality');if(select.options.length)return;QUALITY_NAMES.forEach(function(name){var option=document.createElement('option');option.value=name;option.textContent=name;select.appendChild(option);});}
+    function setRollStage(pending){rollPending=!!pending;document.getElementById('rollQuality').disabled=rollPending;document.getElementById('rollKind').disabled=rollPending;document.getElementById('rollButton').disabled=rollPending;document.getElementById('settleRollButton').disabled=false;document.getElementById('cancelRollButton').disabled=false;document.getElementById('rollStatus').textContent=rollPending?'检定已发送：查看聊天结果，填写 QA 调整后结算':'可发起新检定，或处理 SealDice 中已有的待结算检定';}
+    function openRoll(label,quality){populateRollQualities();document.getElementById('rollTitle').textContent=label||'请求机构';if(!rollPending&&quality&&QUALITY_NAMES.indexOf(quality)>=0)document.getElementById('rollQuality').value=quality;if(!rollPending)document.getElementById('rollQa').value='0';setRollStage(rollPending);document.getElementById('rollModal').classList.add('open');document.getElementById('rollModal').setAttribute('aria-hidden','false');}
+    function closeRoll(){document.getElementById('rollModal').classList.remove('open');document.getElementById('rollModal').setAttribute('aria-hidden','true');}
+    function openAccess(){var modal=document.getElementById('accessModal');document.getElementById('accessKey').value='';document.getElementById('accessError').textContent='';modal.classList.add('open');modal.setAttribute('aria-hidden','false');setTimeout(function(){document.getElementById('accessKey').focus();},0);}
+    function closeAccess(){document.getElementById('accessModal').classList.remove('open');document.getElementById('accessModal').setAttribute('aria-hidden','true');}
+    function hashAccessKey(value){var hash=2166136261;for(var i=0;i<value.length;i++){hash^=value.charCodeAt(i);hash=Math.imul(hash,16777619);}return hash>>>0;}
+    function confirmAccess(){var input=document.getElementById('accessKey');if(hashAccessKey(input.value.trim())===RESTRICTED_DOCUMENT_KEY_HASH){closeAccess();document.getElementById('restrictedMenu').classList.add('open');document.getElementById('restrictedMenu').setAttribute('aria-hidden','false');}else{document.getElementById('accessError').textContent='凭证无效。该次访问已被记录。';input.select();}}
+    function closeRestricted(){document.getElementById('restrictedMenu').classList.remove('open');document.getElementById('restrictedMenu').setAttribute('aria-hidden','true');}
+
+    document.addEventListener('click',function(e){
+      var el=e.target.closest('[data-action]'); if(!el)return;
+      var action=el.dataset.action;
+      if(action==='page'){activePage=el.dataset.page;render();return;}
+      if(action==='restricted-entry'){openAccess();return;}
+      if(action==='close-access'){closeAccess();return;}
+      if(action==='confirm-access'){confirmAccess();return;}
+      if(action==='close-restricted'){closeRestricted();return;}
+      if(action==='open-roll'){openRoll('请求机构',QUALITY_NAMES[0]);return;}
+      if(action==='close-roll'){closeRoll();return;}
+      if(action==='confirm-roll'){var quality=document.getElementById('rollQuality').value;var kind=document.getElementById('rollKind').value==='tr'?'tr':'ta';window.sealchat.roll('.'+kind+' '+quality,quality+(kind==='tr'?'现实改写':'检定'),{});setRollStage(true);document.getElementById('rollQa').focus();toast('检定已发送，请查看聊天结果后结算');return;}
+      if(action==='settle-roll'){var qa=Math.trunc(Number(document.getElementById('rollQa').value)||0);window.sealchat.roll('.taq '+qa,'三角机构检定结算',{});setRollStage(false);toast('结算已发送，资源将由SealDice写回角色卡');closeRoll();return;}
+      if(action==='cancel-roll'){window.sealchat.roll('.tacancel','放弃三角机构待结算检定',{});setRollStage(false);toast('已发送放弃待结算检定');return;}
+      if(action==='rule-command'){window.sealchat.roll(el.dataset.command,'三角机构规则操作',{});toast('规则操作已发送');return;}
+      if(action==='tria-all'){window.sealchat.roll('.tatri all','三重升华：全员协力',{});setRollStage(false);toast('三重升华选择已发送');return;}
+      if(action==='tria-commend'){window.sealchat.roll('.tatri commend','三重升华：此刻之星',{});setRollStage(false);toast('三重升华选择已发送');return;}
+      if(action==='tria-qa'){var tq=document.getElementById('rollQuality').value;var amount=Math.max(1,Math.min(3,Math.trunc(Number(document.getElementById('triaQa').value)||1)));window.sealchat.roll('.tatri qa '+tq+' '+amount,'三重升华：补充QA',{});setRollStage(false);toast('三重升华QA补充已发送');return;}
+      if(action==='quality-roll'){openRoll(el.dataset.quality+'检定',el.dataset.quality);return;}
+      if(action==='qa'){var name=el.dataset.quality;var value=Number(el.dataset.value);model.qualities[name].current=(model.qualities[name].current===value?Math.max(0,value-1):value);save(name+'当前质保已更新');render();return;}
+      if(action==='track'){var track=el.dataset.track,lane=el.dataset.lane,index=Number(el.dataset.index),current=Number(model.tracks[track][lane][index]||0);model.tracks[track][lane][index]=current===0?2:current===2?1:0;save('轨迹已更新');render();return;}
+      if(action==='network'){var ri=Number(el.dataset.index);model.relationships[ri].inNetwork=!model.relationships[ri].inNetwork;save('网络已更新');render();return;}
+    });
+    document.addEventListener('change',function(e){
+      var el=e.target.closest('[data-path]'); if(!el)return;
+      var value=el.type==='number'?Number(el.value):el.value;
+      if(el.type==='number'&&!Number.isFinite(value))value=0;
+      if(el.dataset.path.indexOf('qualities.')===0){value=Math.max(0,Math.min(9,Number(value)||0));}
+      setPath(el.dataset.path,value);save();
+    });
+    document.getElementById('rollModal').addEventListener('click',function(e){if(e.target.id==='rollModal')closeRoll();});
+    document.getElementById('accessModal').addEventListener('click',function(e){if(e.target.id==='accessModal')closeAccess();});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeRoll();closeAccess();closeRestricted();}else if(e.key==='Enter'&&document.getElementById('accessModal').classList.contains('open')){confirmAccess();}});
+
+    window.sealchat.setRollDispatchMode('template');
+    window.sealchat.onUpdate(function(data){currentData={name:(data&&data.name)||'',avatarUrl:(data&&data.avatarUrl)||'',attrs:(data&&data.attrs)||{}};model=normalize(currentData);render();});
+  </script>
+</body>
+</html>
